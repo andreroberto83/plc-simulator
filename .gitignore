@@ -1,0 +1,13 @@
+# Configuração local do Claude Code (não vai para o repositório)
+.claude/
+CLAUDE.md
+
+# Arquivos do sistema e do Google Drive
+desktop.ini
+Thumbs.db
+.DS_Store
+*.tmp
+~$*
+
+# Caso algum dia surja (o projeto não usa npm)
+node_modules/

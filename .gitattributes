@@ -1,0 +1,2 @@
+# Mantém fim de linha LF em todos os arquivos de texto, em qualquer sistema
+* text=auto eol=lf

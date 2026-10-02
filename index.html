@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador de CLP</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Simulador de CLP</div>
+    <input id="project-name" class="project-name" type="text" spellcheck="false" title="Nome do projeto">
+    <div class="seg lang-seg" role="radiogroup" aria-label="Linguagem">
+      <button type="button" data-lang="ST" title="Texto Estruturado (IEC 61131-3)">ST</button>
+      <button type="button" data-lang="LD" title="Diagrama Ladder">Ladder</button>
+    </div>
+    <div class="group">
+      <button id="btn-new" class="btn" type="button" title="Novo projeto">Novo</button>
+      <button id="btn-open" class="btn" type="button" title="Abrir arquivo .json">Abrir</button>
+      <button id="btn-save" class="btn" type="button" title="Salvar arquivo .json (Ctrl+S)">Salvar</button>
+      <select id="sel-example" class="btn" title="Carregar programa de exemplo">
+        <option value="">Exemplos…</option>
+      </select>
+      <input id="file-input" type="file" accept=".json,application/json" hidden>
+    </div>
+    <div class="group">
+      <button id="btn-undo" class="btn" type="button" title="Desfazer (Ctrl+Z)">↶</button>
+      <button id="btn-redo" class="btn" type="button" title="Refazer (Ctrl+Y)">↷</button>
+    </div>
+    <div class="group run-group">
+      <button id="btn-run" class="btn btn-run" type="button" title="RUN / STOP (F5)">▶ RUN</button>
+      <label class="scan-label">Scan
+        <select id="sel-scan" class="btn">
+          <option value="10">10 ms</option>
+          <option value="20">20 ms</option>
+          <option value="50">50 ms</option>
+          <option value="100">100 ms</option>
+          <option value="250">250 ms</option>
+        </select>
+      </label>
+      <span id="plc-status" class="plc-status stop">STOP</span>
+      <span id="scan-count" class="scan-count"></span>
+    </div>
+  </header>
+
+  <nav class="palette" id="palette">
+    <div class="pal-group">
+      <span class="pal-title">Inserir</span>
+      <div class="seg" role="radiogroup" aria-label="Modo de inserção">
+        <button type="button" data-mode="series" class="on" title="Novo contato em série, depois do selecionado">Série</button>
+        <button type="button" data-mode="parallel" title="Novo contato em paralelo com o selecionado (ramo)">Paralelo</button>
+      </div>
+    </div>
+    <div class="pal-group" id="pal-cond"><span class="pal-title">Condições</span></div>
+    <div class="pal-group" id="pal-out"><span class="pal-title">Saídas</span></div>
+    <div class="pal-group">
+      <span class="pal-title">Degrau</span>
+      <button type="button" class="pal-btn" id="btn-add-rung" title="Novo degrau abaixo do selecionado">+ Degrau</button>
+      <button type="button" class="pal-btn" id="btn-del" title="Excluir seleção (Delete)">Excluir</button>
+    </div>
+  </nav>
+
+  <nav class="palette" id="st-palette" hidden>
+    <div class="pal-group" id="stp-ctrl"><span class="pal-title">Estruturas</span></div>
+    <div class="pal-group" id="stp-fb"><span class="pal-title">Blocos IEC</span></div>
+    <div class="pal-group">
+      <span class="pal-title">E/S</span>
+      <button type="button" class="pal-btn" id="btn-st-io" title="Declara no VAR as entradas e saídas da cena que ainda não foram declaradas">Declarar E/S da cena</button>
+    </div>
+  </nav>
+
+  <main class="layout">
+    <section class="editor-pane">
+      <div id="editor" class="editor" tabindex="0" aria-label="Diagrama ladder"></div>
+      <div id="st-host" class="st-host" hidden></div>
+    </section>
+
+    <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" title="Arraste para ajustar a largura · duplo clique esconde/mostra o painel"></div>
+
+    <aside class="side-pane">
+      <section class="scene-pane">
+        <div class="scene-head">
+          <select id="sel-scene" class="btn" title="Cena de E/S"></select>
+          <button id="btn-scene-info" class="btn btn-icon" type="button" title="Sobre a cena">?</button>
+        </div>
+        <div id="scene-desc" class="scene-desc" hidden></div>
+        <div id="scene-host" class="scene-host"></div>
+      </section>
+
+      <section class="tabs-pane">
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" data-tab="props" class="on" id="tab-btn-props">Propriedades</button>
+          <button type="button" role="tab" data-tab="tags" id="tab-btn-tags">Tags</button>
+          <button type="button" role="tab" data-tab="diag">Diagnóstico <span id="diag-badge" class="badge" hidden></span></button>
+          <button type="button" role="tab" data-tab="comm">Comunicação <span id="comm-badge" class="badge ok" hidden></span></button>
+        </div>
+        <div class="tab-body" data-tab="props" id="tab-props"></div>
+        <div class="tab-body" data-tab="tags" id="tab-tags" hidden></div>
+        <div class="tab-body" data-tab="diag" id="tab-diag" hidden></div>
+        <div class="tab-body" data-tab="comm" id="tab-comm" hidden></div>
+      </section>
+    </aside>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- Scripts clássicos (sem módulos) para abrir direto do disco, sem servidor. -->
+  <script src="js/core/addresses.js"></script>
+  <script src="js/core/model.js"></script>
+  <script src="js/st/st.js"></script>
+  <script src="js/core/engine.js"></script>
+  <script src="js/ladder/ladder-view.js"></script>
+  <script src="js/st/st-editor.js"></script>
+  <script src="js/scenes/kit.js"></script>
+  <script src="js/scenes/painel.js"></script>
+  <script src="js/scenes/motor.js"></script>
+  <script src="js/scenes/tanque.js"></script>
+  <script src="js/scenes/esteira.js"></script>
+  <script src="js/ladder/ladder-examples.js"></script>
+  <script src="js/st/st-examples.js"></script>
+  <script src="js/comm/modbus-core.js"></script>
+  <script src="js/comm/comm-ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
