@@ -8,7 +8,8 @@ Abra `index.html` no **Chrome** ou no **Edge** (dois cliques). Não precisa inst
 
 - O projeto aberto fica salvo automaticamente no navegador.
 - Para guardar uma cópia ou compartilhar, use **Salvar**, que baixa um arquivo `.plc.json`, e **Abrir** para carregá-lo depois.
-- O botão no canto direito do topo alterna o tema: **◐ automático** (segue o Windows), **☀ claro** e **☾ escuro**.
+- A caixa **Tema**, no canto direito do topo, escolhe entre **Sistema** (segue o Windows), **Claro** e **Escuro**.
+- As divisórias podem ser arrastadas: entre o programa e o painel lateral, entre a cena e as abas de baixo, e entre o código ST e a coluna de monitoração. Duplo clique numa divisória volta ao tamanho padrão (na do painel lateral, esconde/mostra o painel).
 
 ### Atalhos
 

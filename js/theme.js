@@ -5,11 +5,6 @@
   'use strict';
   const KEY = 'plc-simulator.theme.v1';
   const MODES = ['auto', 'light', 'dark'];
-  const INFO = {
-    auto:  { icon: '◐', label: 'Automático (segue o sistema)' },
-    light: { icon: '☀', label: 'Claro' },
-    dark:  { icon: '☾', label: 'Escuro' },
-  };
 
   function load() {
     try { const m = localStorage.getItem(KEY); return MODES.includes(m) ? m : 'auto'; }
@@ -23,21 +18,17 @@
     else document.documentElement.setAttribute('data-theme', mode);
   }
 
-  let mode = load();
+  const mode = load();
   apply(mode);
 
   document.addEventListener('DOMContentLoaded', function () {
-    const btn = document.getElementById('btn-theme');
-    if (!btn) return;
-    function show() {
-      btn.textContent = INFO[mode].icon;
-      btn.title = 'Tema: ' + INFO[mode].label + ' — clique para trocar';
-      btn.setAttribute('aria-label', btn.title);
-    }
-    btn.addEventListener('click', function () {
-      mode = MODES[(MODES.indexOf(mode) + 1) % MODES.length];
-      apply(mode); save(mode); show();
+    const sel = document.getElementById('sel-theme');
+    if (!sel) return;
+    sel.value = mode;
+    sel.addEventListener('change', function () {
+      const m = MODES.includes(sel.value) ? sel.value : 'auto';
+      apply(m); save(m);
+      sel.blur(); // devolve o teclado aos atalhos (F5, setas…)
     });
-    show();
   });
 })();

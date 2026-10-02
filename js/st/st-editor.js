@@ -54,13 +54,18 @@
               <pre class="st-hl" aria-hidden="true"></pre>
               <textarea class="st-ta" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off" aria-label="Código em Texto Estruturado"></textarea>
             </div>
-            <pre class="st-mon" aria-hidden="true"></pre>
+            <div class="st-mon-col">
+              <div class="st-mon-grip" role="separator" aria-orientation="vertical"
+                   title="Arraste para ajustar a largura da monitoração · duplo clique volta ao padrão"></div>
+              <pre class="st-mon" aria-hidden="true"></pre>
+            </div>
           </div>
         </div>`;
       this.ta = host.querySelector('.st-ta');
       this.hl = host.querySelector('.st-hl');
       this.gutter = host.querySelector('.st-gutter');
       this.mon = host.querySelector('.st-mon');
+      this.bindMonResize();
       this.errors = [];
       this.fault = null;
       this.lineEls = [];
@@ -68,6 +73,43 @@
       this.ta.addEventListener('keydown', e => this.onKey(e));
       this.ta.addEventListener('focus', () => this.opts.onFocus && this.opts.onFocus());
       this.ta.addEventListener('blur', () => this.opts.onBlur && this.opts.onBlur());
+    }
+
+    /** Largura da coluna de monitoração ajustável pela alça da esquerda; lembrada no navegador. */
+    bindMonResize() {
+      const KEY = 'plc-simulator.st-mon.v1';
+      const wrap = this.host.querySelector('.st-wrap');
+      const grip = this.host.querySelector('.st-mon-grip');
+      const setW = w => {
+        if (w) wrap.style.setProperty('--st-mon-w', w + 'px');
+        else wrap.style.removeProperty('--st-mon-w');
+      };
+      let width = 0;
+      try { width = +localStorage.getItem(KEY) || 0; } catch (e) { /* sem armazenamento */ }
+      setW(width);
+      const store = () => { try { localStorage.setItem(KEY, String(width || '')); } catch (e) { /* ignora */ } };
+      grip.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        grip.setPointerCapture(e.pointerId);
+        grip.classList.add('dragging');
+        document.body.classList.add('resizing');
+        const move = ev => {
+          const r = wrap.getBoundingClientRect();
+          width = Math.round(Math.min(Math.max(r.right - ev.clientX, 120), r.width - 220));
+          setW(width);
+        };
+        const up = () => {
+          grip.classList.remove('dragging');
+          document.body.classList.remove('resizing');
+          grip.removeEventListener('pointermove', move);
+          grip.removeEventListener('pointerup', up);
+          store();
+        };
+        grip.addEventListener('pointermove', move);
+        grip.addEventListener('pointerup', up);
+      });
+      grip.addEventListener('dblclick', () => { width = 0; setW(0); store(); });
     }
 
     getText() { return this.ta.value; }

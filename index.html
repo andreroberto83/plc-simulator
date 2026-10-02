@@ -42,7 +42,13 @@
       <span id="plc-status" class="plc-status stop">STOP</span>
       <span id="scan-count" class="scan-count"></span>
     </div>
-    <button id="btn-theme" class="btn btn-icon btn-theme" type="button" title="Tema">◐</button>
+    <label class="scan-label" title="Aparência da página">Tema
+      <select id="sel-theme" class="btn">
+        <option value="auto">Sistema</option>
+        <option value="light">Claro</option>
+        <option value="dark">Escuro</option>
+      </select>
+    </label>
   </header>
 
   <nav class="palette" id="palette">
@@ -88,6 +94,8 @@
         <div id="scene-desc" class="scene-desc" hidden></div>
         <div id="scene-host" class="scene-host"></div>
       </section>
+
+      <div class="splitter-h" id="splitter-scene" role="separator" aria-orientation="horizontal" title="Arraste para ajustar a altura da cena · duplo clique volta ao padrão"></div>
 
       <section class="tabs-pane">
         <div class="tabs" role="tablist">

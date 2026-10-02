@@ -48,7 +48,7 @@
             <text id="rpm" x="0" y="24" class="big">0 rpm</text>
             <text x="0" y="60" class="lbl">Corrente</text>
             <text id="amp" x="0" y="84" class="big">0,0 A</text>
-            <text id="trip" x="0" y="118" class="alarm"></text>
+            <text id="trip" x="0" y="116" class="alarm" visibility="hidden"><tspan>⚠ F1</tspan><tspan x="0" dy="17">DESARMADO</tspan></text>
           </g>
         </svg>`));
       const $ = sel => host.querySelector(sel);
@@ -85,7 +85,7 @@
           $('#rpm').textContent = Math.round(speed * 1750) + ' rpm';
           const amps = energized ? (speed < 0.9 && !heavy ? 6 * (1 - speed) + 1.2 : heavy ? 2.9 : 1.2) : 0;
           $('#amp').textContent = amps.toFixed(1).replace('.', ',') + ' A';
-          $('#trip').textContent = tripped ? 'F1 DESARMADO' : '';
+          $('#trip').setAttribute('visibility', tripped ? 'visible' : 'hidden');
           lamps.forEach(l => l.update());
         },
         destroy() {},

@@ -931,7 +931,8 @@
   }
 
   // ================================================================ divisória editor | painel
-  /** Largura do painel lateral ajustável (arrastar) e recolhível (duplo clique); lembrada no navegador. */
+  /** Largura do painel lateral ajustável (arrastar) e recolhível (duplo clique), e altura da
+      cena ajustável; tudo lembrado no navegador. */
   function bindSplitter() {
     const KEY = 'plc-simulator.layout.v1';
     const layout = document.querySelector('.layout');
@@ -967,6 +968,39 @@
       sp.addEventListener('pointerup', up);
     });
     sp.addEventListener('dblclick', () => { saved.collapsed = !saved.collapsed; apply(); store(); });
+
+    // divisória cena | abas: altura da cena (arrastar; duplo clique volta ao padrão)
+    const side = document.querySelector('.side-pane');
+    const scene = document.querySelector('.scene-pane');
+    const spv = $('#splitter-scene');
+    const applyScene = () => {
+      scene.classList.toggle('sized', !!saved.sceneH);
+      if (saved.sceneH) scene.style.setProperty('--scene-h', saved.sceneH + 'px');
+      else scene.style.removeProperty('--scene-h');
+    };
+    applyScene();
+    spv.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      spv.setPointerCapture(e.pointerId);
+      spv.classList.add('dragging');
+      document.body.classList.add('resizing-v');
+      const move = ev => {
+        const r = side.getBoundingClientRect();
+        saved.sceneH = Math.round(Math.min(Math.max(ev.clientY - r.top, 80), r.height - 120));
+        applyScene();
+      };
+      const up = () => {
+        spv.classList.remove('dragging');
+        document.body.classList.remove('resizing-v');
+        spv.removeEventListener('pointermove', move);
+        spv.removeEventListener('pointerup', up);
+        store();
+      };
+      spv.addEventListener('pointermove', move);
+      spv.addEventListener('pointerup', up);
+    });
+    spv.addEventListener('dblclick', () => { delete saved.sceneH; applyScene(); store(); });
   }
 
   // ================================================================ início

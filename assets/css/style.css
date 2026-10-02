@@ -79,8 +79,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .plc-status.run { background: var(--on); color: #fff; animation: blink 1s steps(2) infinite; }
 @keyframes blink { 50% { opacity: .75; } }
 .scan-count { font-family: var(--mono); color: var(--muted); min-width: 90px; font-size: 12px; }
-.btn-theme { font-size: 15px; line-height: 1; }
-
 /* ----------------------------------------------------------- paleta */
 .palette {
   display: flex; gap: 18px; flex-wrap: wrap; align-items: center;
@@ -121,7 +119,8 @@ body.resizing { cursor: col-resize; user-select: none; }
 @media (max-width: 760px) {
   body { overflow: auto; }
   .layout, .layout.side-collapsed { grid-template-columns: 1fr; }
-  .splitter { display: none; }
+  .splitter, .splitter-h { display: none; }
+  .scene-pane.sized { height: auto; max-height: none; }
   .editor { max-height: 70vh; }
   .layout.side-collapsed .side-pane { display: flex; }
   .side-pane { border-top: 1px solid var(--line); }
@@ -131,7 +130,17 @@ body.resizing { cursor: col-resize; user-select: none; }
 .side-pane .tab-body { padding: 10px; }
 .side-pane table.tags { font-size: 12px; }
 .side-pane table.tags td, .side-pane table.tags th { padding: 3px 4px; }
-.scene-pane { max-height: 50% !important; }
+
+/* divisória cena | abas: altura da cena ajustável (arrastar) */
+.splitter-h {
+  flex: none; height: 7px; cursor: row-resize; touch-action: none; position: relative;
+  background: var(--panel-2); border-bottom: 1px solid var(--line);
+}
+.splitter-h::after { content: ''; position: absolute; top: 2px; bottom: 2px; left: 50%; width: 36px; margin-left: -18px; border-radius: 2px;
+  background: repeating-linear-gradient(to right, var(--muted) 0 2px, transparent 2px 5px); opacity: .5; }
+.splitter-h:hover, .splitter-h.dragging { background: var(--accent-soft); }
+body.resizing-v { cursor: row-resize; user-select: none; }
+.scene-pane.sized { flex: none; height: var(--scene-h); max-height: none; }
 
 /* barra do topo sem quebrar linha em telas de notebook */
 @media (max-width: 1500px) {
@@ -185,7 +194,7 @@ body.resizing { cursor: col-resize; user-select: none; }
 .rung-svg .slot:hover .hit { fill: var(--accent-soft); }
 
 /* ----------------------------------------------------------- cena */
-.scene-pane { padding: 10px 12px; border-bottom: 1px solid var(--line); overflow: auto; max-height: 58%; }
+.scene-pane { padding: 10px 12px; overflow: auto; max-height: 50%; flex: none; }
 .scene-head { display: flex; gap: 6px; }
 .scene-head select { flex: 1; font-weight: 600; }
 .scene-desc { margin: 8px 0 0; padding: 8px 10px; background: var(--accent-soft); border-radius: 6px; font-size: 13px; }
@@ -359,9 +368,21 @@ ul.diag li.warning { background: color-mix(in srgb, var(--warn) 14%, transparent
 :root[data-theme="dark"] .c-time { color: #f9a8d4; }
 :root[data-theme="dark"] .c-addr { color: #93c5fd; }
 :root[data-theme="dark"] .c-com { color: #8b95a5; }
+/* Coluna de monitoração: fica presa à direita (o código rola por baixo dela)
+   e tem largura ajustável pela alça da esquerda. */
+.st-mon-col {
+  position: sticky; right: 0; z-index: 2; align-self: stretch; display: flex;
+  flex: none; width: var(--st-mon-w, 340px);
+  background: var(--panel-2); border-left: 1px solid var(--line);
+}
+.st-mon-grip {
+  flex: none; width: 7px; cursor: col-resize; touch-action: none; border-right: 1px solid var(--line);
+  background: repeating-linear-gradient(to bottom, color-mix(in srgb, var(--muted) 45%, transparent) 0 2px, transparent 2px 5px) center / 3px 100% no-repeat, var(--bg);
+}
+.st-mon-grip:hover, .st-mon-grip.dragging { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
 .st-mon {
-  flex: 0 1 300px; min-width: 170px; max-width: 36%; overflow: hidden; padding-left: 12px; padding-right: 10px;
-  border-left: 1px dashed var(--line); color: var(--muted); font-size: 12px; align-self: stretch; background: var(--panel-2); user-select: none;
+  flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; padding-left: 8px; padding-right: 10px;
+  color: var(--muted); font-size: 12px; user-select: none;
 }
 .st-mon .m-name { color: var(--muted); }
 .st-mon .m-true { color: var(--on); font-weight: 700; }
