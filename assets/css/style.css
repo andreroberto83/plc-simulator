@@ -18,14 +18,23 @@
   --mono: ui-monospace, "Cascadia Mono", Consolas, "Roboto Mono", monospace;
   color-scheme: light;
 }
+/* Tema escuro: automático (segue o sistema) ou forçado pelo botão do topo,
+   que grava data-theme="light" | "dark" no <html> (js/theme.js). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #11161d; --panel: #19202a; --panel-2: #1f2733; --line: #2e3947;
     --text: #e3e8ef; --muted: #93a0b2; --accent: #5aa2ff; --accent-soft: #1d3150;
     --on: #3ddc7a; --on-soft: #14351f; --err: #ff6b5e; --warn: #f0b44c;
     --wire: #8b97a8; --rail: #c6d0dc; --sel: #fbbf24;
     color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #11161d; --panel: #19202a; --panel-2: #1f2733; --line: #2e3947;
+  --text: #e3e8ef; --muted: #93a0b2; --accent: #5aa2ff; --accent-soft: #1d3150;
+  --on: #3ddc7a; --on-soft: #14351f; --err: #ff6b5e; --warn: #f0b44c;
+  --wire: #8b97a8; --rail: #c6d0dc; --sel: #fbbf24;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -70,6 +79,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .plc-status.run { background: var(--on); color: #fff; animation: blink 1s steps(2) infinite; }
 @keyframes blink { 50% { opacity: .75; } }
 .scan-count { font-family: var(--mono); color: var(--muted); min-width: 90px; font-size: 12px; }
+.btn-theme { font-size: 15px; line-height: 1; }
 
 /* ----------------------------------------------------------- paleta */
 .palette {
@@ -332,9 +342,23 @@ ul.diag li.warning { background: color-mix(in srgb, var(--warn) 14%, transparent
 .c-com { color: #6b7280; font-style: italic; }
 .c-assign { color: var(--accent); font-weight: 700; }
 @media (prefers-color-scheme: dark) {
-  .c-kw, .c-op { color: #c4b5fd; } .c-type { color: #5eead4; } .c-fb { color: #fbbf24; }
-  .c-fn { color: #7dd3fc; } .c-num { color: #fdba74; } .c-time { color: #f9a8d4; } .c-addr { color: #93c5fd; } .c-com { color: #8b95a5; }
+  :root:not([data-theme="light"]) .c-kw, :root:not([data-theme="light"]) .c-op { color: #c4b5fd; }
+  :root:not([data-theme="light"]) .c-type { color: #5eead4; }
+  :root:not([data-theme="light"]) .c-fb { color: #fbbf24; }
+  :root:not([data-theme="light"]) .c-fn { color: #7dd3fc; }
+  :root:not([data-theme="light"]) .c-num { color: #fdba74; }
+  :root:not([data-theme="light"]) .c-time { color: #f9a8d4; }
+  :root:not([data-theme="light"]) .c-addr { color: #93c5fd; }
+  :root:not([data-theme="light"]) .c-com { color: #8b95a5; }
 }
+:root[data-theme="dark"] .c-kw, :root[data-theme="dark"] .c-op { color: #c4b5fd; }
+:root[data-theme="dark"] .c-type { color: #5eead4; }
+:root[data-theme="dark"] .c-fb { color: #fbbf24; }
+:root[data-theme="dark"] .c-fn { color: #7dd3fc; }
+:root[data-theme="dark"] .c-num { color: #fdba74; }
+:root[data-theme="dark"] .c-time { color: #f9a8d4; }
+:root[data-theme="dark"] .c-addr { color: #93c5fd; }
+:root[data-theme="dark"] .c-com { color: #8b95a5; }
 .st-mon {
   flex: 0 1 300px; min-width: 170px; max-width: 36%; overflow: hidden; padding-left: 12px; padding-right: 10px;
   border-left: 1px dashed var(--line); color: var(--muted); font-size: 12px; align-self: stretch; background: var(--panel-2); user-select: none;

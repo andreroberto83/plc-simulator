@@ -8,6 +8,7 @@ Abra `index.html` no **Chrome** ou no **Edge** (dois cliques). Não precisa inst
 
 - O projeto aberto fica salvo automaticamente no navegador.
 - Para guardar uma cópia ou compartilhar, use **Salvar**, que baixa um arquivo `.plc.json`, e **Abrir** para carregá-lo depois.
+- O botão no canto direito do topo alterna o tema: **◐ automático** (segue o Windows), **☀ claro** e **☾ escuro**.
 
 ### Atalhos
 
