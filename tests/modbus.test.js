@@ -94,6 +94,29 @@ test('fora do mapa, quantidade inválida, função desconhecida', () => {
   assert.strictEqual(hex(slave.handlePdu(Uint8Array.of(0x2B, 0x0E, 1, 0))), 'ab 01');
 });
 
+test('em STOP o mestre lê as saídas zeradas, como a cena', () => {
+  const { e, slave } = plc('%QX0.0 := TRUE; %QW0 := 123;');
+  e.scan(10);
+  assert.strictEqual(hex(slave.handlePdu(pdu(1, 0, 1))), '01 01 01');
+  e.stop();
+  assert.strictEqual(hex(slave.handlePdu(pdu(1, 0, 1))), '01 01 00');
+  assert.strictEqual(hex(slave.handlePdu(pdu(3, 0, 1))), '03 02 00 00');
+});
+test('palavra de 16 bits: %QW estoura igual ao Modbus e UINT lê 65535', () => {
+  const { e, slave } = plc('VAR u AT %MW0 : UINT; x AT %MW1 : INT; END_VAR\n%QW0 := 70000; x := 32767; x := x + 1;');
+  slave.handlePdu(pdu(6, 1024, 0xFFFF));
+  e.scan(10);
+  assert.strictEqual(e.getOutput('QW0'), 4464);
+  assert.strictEqual(hex(slave.handlePdu(pdu(3, 0, 1))), '03 02 11 70');
+  assert.strictEqual(e.stProg.watch('u'), '65535');
+  assert.strictEqual(e.stProg.watch('x'), '-32768');
+});
+test('AT %MW só aceita INT ou UINT', () => {
+  const { ST } = globalThis.PLC;
+  assert.ok(ST.compile('VAR d AT %MW0 : DINT; END_VAR').errors.some(e => /16 bits/.test(e.msg)));
+  assert.strictEqual(ST.compile('VAR u AT %MW0 : UINT; END_VAR').errors.length, 0);
+});
+
 console.log('RTU e TCP');
 test('RTU: responde só ao seu ID, broadcast executa sem responder', () => {
   const { e, slave } = plc(SRC);
@@ -108,6 +131,11 @@ test('TCP: MBAP ecoa transaction id e unit id', () => {
   const { slave } = plc(SRC);
   const req = Uint8Array.from([0x12, 0x34, 0, 0, 0, 6, 9, 3, 4, 0, 0, 1]);
   assert.strictEqual(hex(slave.handleTcpAdu(req)), '12 34 00 00 00 05 09 03 02 00 00');
+});
+test('TCP: MBAP sem PDU (length < 2) é descartado', () => {
+  const { slave } = plc(SRC);
+  assert.strictEqual(slave.handleTcpAdu(Uint8Array.from([0, 1, 0, 0, 0, 0, 1, 3])), null);
+  assert.strictEqual(slave.handleTcpAdu(Uint8Array.from([0, 1, 0, 0, 0, 1, 1, 3])), null);
 });
 test('modbusRefOf para a tela', () => {
   assert.strictEqual(Modbus.modbusRefOf('M0.1'), 'Coil 1025');

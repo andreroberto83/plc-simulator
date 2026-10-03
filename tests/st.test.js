@@ -35,6 +35,11 @@ test('literais de tempo, bases numéricas e comentários', () => {
   const t = ST.lex('T#1m30s T#1.5s TIME#250ms 16#FF 2#1010 1_000 3.5E2 (* c *) // x\n%IX0.3 %MW2');
   assert.deepStrictEqual(t.slice(0, 9).map(x => x.v), [90000, 1500, 250, 255, 10, 1000, 350, 'I0.3', 'MW2']);
 });
+test('dígito inválido para a base é erro', () => {
+  expectError('VAR i : INT; END_VAR\ni := 2#102;', /base 2/);
+  expectError('VAR i : INT; END_VAR\ni := 8#9;', /base 8/);
+  assert.strictEqual(errorsOf('VAR i : INT; END_VAR\ni := 16#7F_FF;').length, 0);
+});
 test('erro de ; faltando aponta a linha certa', () => {
   const errs = errorsOf('VAR a : BOOL; END_VAR\na := TRUE\na := FALSE;');
   assert.strictEqual(errs[0].line, 2);
@@ -66,6 +71,11 @@ test('FB inexistente / campo errado / chamada em expressão', () => {
   expectError('VAR t : TON; b : BOOL; END_VAR\nt(IN := TRUE, PT := T#1s);\nb := t.DN;', /não tem o campo DN/);
   expectError('VAR t : TON; b : BOOL; END_VAR\nb := t(IN := TRUE);', /não pode ser usado em expressão/);
   expectError('VAR t : TON; END_VAR\nt(IN := TRUE, PT := 1000);', /PT de TON espera TIME/);
+});
+test('MIN/MAX/LIMIT não misturam TIME com número', () => {
+  expectError('VAR d : DINT; END_VAR\nd := MIN(T#1s, 5);', /só números ou só TIME/);
+  expectError('VAR t : TIME; END_VAR\nt := LIMIT(T#0s, t, 100);', /só números ou só TIME/);
+  assert.strictEqual(errorsOf('VAR t : TIME; END_VAR\nt := MAX(t, T#2s);').length, 0);
 });
 test('EXIT fora de laço', () => { expectError('EXIT;', /EXIT só pode/); });
 
@@ -155,6 +165,19 @@ r := SQRT(16.0);
 %MW6 := DINT_TO_INT(TIME_TO_DINT(T#1s500ms));`);
   e.scan(10);
   assert.deepStrictEqual(['MW0', 'MW1', 'MW2', 'MW3', 'MW4', 'MW5', 'MW6'].map(k => e.words[k]), [1000, 9, 2, 8, 12, 4, 1500]);
+});
+
+test('REAL_TO_INT arredonda .5 para longe do zero (simétrico)', () => {
+  const e = plc('%MW0 := REAL_TO_INT(2.5); %MW1 := REAL_TO_INT(-2.5); %MW2 := REAL_TO_INT(-1.5); %MW3 := REAL_TO_INT(-1.4);');
+  e.scan(10);
+  assert.deepStrictEqual(['MW0', 'MW1', 'MW2', 'MW3'].map(k => e.words[k]), [3, -3, -2, -1]);
+});
+test('STOP→RUN refaz valores iniciais que dependem de outra variável', () => {
+  const e = plc('VAR a : INT := 5; b : INT := a; END_VAR\na := a + 1;');
+  for (let i = 0; i < 10; i++) e.scan(10);
+  e.stop(); assert.ok(e.start());
+  assert.strictEqual(e.stProg.watch('a'), '5');
+  assert.strictEqual(e.stProg.watch('b'), '5');
 });
 
 console.log('Blocos de função IEC');

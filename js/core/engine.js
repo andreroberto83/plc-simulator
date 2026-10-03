@@ -13,6 +13,9 @@
   const Addr = root.PLC.Addr;
   const Model = root.PLC.Model;
 
+  /** Valor qualquer -> INT de 16 bits com sinal (estoura como no CLP: 32768 -> -32768). */
+  function toInt16(v) { return ((Math.trunc(Number(v)) || 0) << 16) >> 16; }
+
   function newTimer() { return { EN: 0, TT: 0, DN: 0, ACC: 0, PRE: 0, _prevIn: 0 }; }
   function newCounter() { return { CU: 0, CD: 0, DN: 0, ACC: 0, PRE: 0 }; }
 
@@ -169,12 +172,13 @@
         read(p, type) {
           if (p.kind === 'bit') return !!eng.bits[p.key];
           if (p.kind === 'dword') return eng.readDword(p.n, type);
-          return eng.words[p.key] || 0;
+          const w = eng.words[p.key] || 0;
+          return type === 'UINT' ? w & 0xFFFF : w;
         },
         write(p, v, type) {
           if (p.kind === 'bit') eng.bits[p.key] = v ? 1 : 0;
           else if (p.kind === 'dword') eng.writeDword(p.n, v, type);
-          else eng.words[p.key] = Math.trunc(Number(v)) || 0;
+          else eng.words[p.key] = toInt16(v);   // palavra de 16 bits, guardada como INT com sinal
         },
       };
     }
@@ -195,17 +199,20 @@
 
     /**
      * Acesso para a comunicação (Modbus). Entradas vêm do campo (cena),
-     * saídas e memória vêm da imagem do CLP. O mestre só escreve em %M.
+     * saídas vêm das saídas físicas (zeradas em STOP) e memória vem da
+     * imagem do CLP. O mestre só escreve em %M.
      */
     commData() {
       const eng = this;
       return {
         readBit(key) {
           if (key[0] === 'I') return eng.physIn[key] ? 1 : 0;
+          if (key[0] === 'Q') return eng.physOut[key] ? 1 : 0;
           return eng.bits[key] ? 1 : 0;
         },
         readWord(key) {
           if (key[0] === 'I') return Math.trunc(Number(eng.physIn[key]) || 0);
+          if (key[0] === 'Q') return Math.trunc(eng.physOut[key] || 0);
           return Math.trunc(eng.words[key] || 0);
         },
         writeBit(key, v) { if (key[0] === 'M') eng.bits[key] = v ? 1 : 0; },

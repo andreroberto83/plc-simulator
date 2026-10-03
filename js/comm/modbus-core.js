@@ -241,7 +241,7 @@
       const proto = (adu[2] << 8) | adu[3];
       if (proto !== 0) return null;
       const len = (adu[4] << 8) | adu[5];
-      if (adu.length < 6 + len) return null;
+      if (len < 2 || adu.length < 6 + len) return null;   // len inclui o unit id; o PDU tem ao menos o código da função
       const res = this.handlePdu(adu.subarray(7, 6 + len));
       const out = new Uint8Array(7 + res.length);
       out[0] = adu[0]; out[1] = adu[1];                 // transaction id

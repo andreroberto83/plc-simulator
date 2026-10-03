@@ -72,7 +72,11 @@
       }
       // número com base
       m = /^(2|8|16)#([0-9a-fA-F_]+)/.exec(src.slice(i, i + 40));
-      if (m) { push('int', parseInt(m[2].replace(/_/g, ''), +m[1]), m[0]); adv(m[0].length); continue; }
+      if (m) {
+        const digits = m[2].replace(/_/g, '');
+        if (!digits || [...digits].some(d => parseInt(d, 16) >= +m[1])) throw new StError(`Número inválido na base ${m[1]}: ${m[0]}`, l0, c0);
+        push('int', parseInt(digits, +m[1]), m[0]); adv(m[0].length); continue;
+      }
       // real / inteiro
       m = /^\d[\d_]*(\.\d[\d_]*)?([eE][+-]?\d+)?/.exec(src.slice(i, i + 40));
       if (m) {
@@ -563,7 +567,7 @@
   function fnSignature(name, argTypes, fail) {
     const n = argTypes.length;
     const need = k => { if (n !== k) fail(`${name} espera ${k} argumento(s), recebeu ${n}`); };
-    const numOrTime = t => isNum(t) || t === 'TIME';
+    const allNumOrTime = () => argTypes.every(isNum) || argTypes.every(t => t === 'TIME');   // não mistura TIME com número
     const m = /^([A-Z]+)_TO_([A-Z]+)$/.exec(name);
     if (m && CONV_TYPES.includes(m[1]) && CONV_TYPES.includes(m[2])) {
       need(1);
@@ -575,7 +579,7 @@
           let v = a[0];
           if (to === 'BOOL') return !!v;
           if (from === 'BOOL') v = v ? 1 : 0;
-          if (INT_RANGE[to] && isReal(from)) v = Math.round(v);   // REAL_TO_INT arredonda (IEC)
+          if (INT_RANGE[to] && isReal(from)) v = Math.sign(v) * Math.round(Math.abs(v));   // REAL_TO_INT arredonda (IEC); .5 se afasta do zero
           return coerce(v, to);
         },
       };
@@ -587,10 +591,10 @@
       case 'TRUNC': need(1); if (!isReal(argTypes[0])) fail('TRUNC espera REAL'); return { type: 'DINT', fn: a => Math.trunc(a[0]) };
       case 'MIN': case 'MAX':
         if (n < 2) fail(`${name} espera 2 ou mais argumentos`);
-        if (!argTypes.every(numOrTime)) fail(`${name} espera números`);
+        if (!allNumOrTime()) fail(`${name} espera só números ou só TIME`);
         return { type: numT(), fn: a => (name === 'MIN' ? Math.min : Math.max)(...a) };
       case 'LIMIT':
-        need(3); if (!argTypes.every(numOrTime)) fail('LIMIT(MN, IN, MX) espera números');
+        need(3); if (!allNumOrTime()) fail('LIMIT(MN, IN, MX) espera só números ou só TIME');
         return { type: numT(), fn: a => Math.min(Math.max(a[1], a[0]), a[2]) };
       case 'SEL':
         need(3); if (argTypes[0] !== 'BOOL') fail('SEL(G, IN0, IN1): G deve ser BOOL');
@@ -615,7 +619,7 @@
           const want = p.kind === 'bit' ? 'BOOL' : 'INT';
           if (d.type.kind === 'ARRAY' || d.type.kind === 'FB') this.err('AT só vale para tipos básicos', d);
           else if (p.kind === 'bit' && d.type.kind !== 'BOOL') this.err(`${Addr.iec(d.at)} é um bit: a variável deve ser BOOL`, d);
-          else if (p.kind === 'word' && !isInt(d.type.kind)) this.err(`${Addr.iec(d.at)} é uma palavra: use INT, UINT ou DINT`, d);
+          else if (p.kind === 'word' && !['INT', 'UINT'].includes(d.type.kind)) this.err(`${Addr.iec(d.at)} é uma palavra de 16 bits: use INT ou UINT (para 32 bits use %MD)`, d);
           else if (p.kind === 'dword' && !['DINT', 'UDINT', 'REAL'].includes(d.type.kind)) this.err(`${Addr.iec(d.at)} tem 32 bits: use DINT, UDINT ou REAL`, d);
           if (d.init) this.err('Variável com AT não pode ter valor inicial (o valor vem do endereço)', d);
           void want;
@@ -882,6 +886,7 @@
     init(io, keep) {
       this.io = io;
       this.now = 0;
+      this.cells = {};   // valores iniciais são calculados a partir das declarações, nunca da execução anterior
       const cells = {};
       for (const d of this.decls) {
         const k = d.type.kind;
