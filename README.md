@@ -12,7 +12,7 @@ Use o **Chrome** ou o **Edge**, no computador. Não precisa instalar nada.
 2. Em **Exemplos…**, escolha um programa pronto, por exemplo “Motor — partida direta com selo”. A cena muda junto.
 3. Clique em **▶ RUN** (ou aperte `F5`).
 4. Use os botões da cena e observe as lâmpadas e o programa.
-5. Clique em **STOP** para parar.
+5. Clique em **STOP** para parar a simulação.
 
 ## A tela
 
